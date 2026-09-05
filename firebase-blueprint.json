@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "RefundRequest": {
+      "title": "RefundRequest",
+      "description": "A student refund request document tracking the 9-stage refund lifecycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "courseName": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "enrollmentDate": { "type": "string" },
+        "submissionDate": { "type": "string" },
+        "courseFee": { "type": "number" },
+        "requestedAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentAccount": { "type": "string" },
+        "transactionId": { "type": "string" },
+        "primaryReason": { "type": "string" },
+        "detailedReason": { "type": "string" },
+        "bankName": { "type": "string" },
+        "bankAccountNumber": { "type": "string" },
+        "bankRoutingNumber": { "type": "string" },
+        "status": { "type": "string" },
+        "currentStage": { "type": "number" }
+      },
+      "required": ["id", "studentId", "studentName", "whatsapp", "status", "currentStage"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with role",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "fullName": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "studentId": { "type": "string" },
+        "address": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "firstName", "lastName", "whatsapp", "role"]
+    }
+  },
+  "firestore": {
+    "/refund_requests/{requestId}": {
+      "schema": "RefundRequest",
+      "description": "Collection of all refund requests"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of all users"
+    }
+  }
+}

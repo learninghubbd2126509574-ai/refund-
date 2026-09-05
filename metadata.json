@@ -1,0 +1,6 @@
+{
+  "name": "Unity Earning Refund Portal",
+  "description": "Official multi-stage refund verification and tracking portal for Unity Earning E-learning Platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
