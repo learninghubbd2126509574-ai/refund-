@@ -234,7 +234,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onLoginSuccess(found);
       onClose();
     } else {
-      setErrorMsg('অ্যাকাউন্টটি পাওয়া যায়নি। অনুগ্রহ করে সঠিক তথ্য প্রদান করুন বা রেজিস্ট্রেশন করুন। (অ্যাডমিন আইডি: ADM-001, পাসওয়ার্ড: 4012)');
+      setErrorMsg('অ্যাকাউন্টটি পাওয়া যায়নি। অনুগ্রহ করে সঠিক তথ্য প্রদান করুন বা নতুন অ্যাকাউন্ট তৈরি করুন।');
     }
   };
 
@@ -244,7 +244,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     const trimmedPin = adminPin.trim();
     if (!trimmedPin) {
-      setErrorMsg('অনুগ্রহ করে অ্যাডমিন পাসওয়ার্ড / সিকিউরিটি পিন লিখুন (যেমন: 4012)');
+      setErrorMsg('অনুগ্রহ করে অ্যাডমিন সিকিউরিটি পাসওয়ার্ড লিখুন');
       return;
     }
 
@@ -256,7 +256,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       existingUsers.some(u => (u.role === adminRole || u.role === 'admin') && u.password === trimmedPin);
 
     if (!isValidPin) {
-      setErrorMsg('ভুল অ্যাডমিন পাসওয়ার্ড! সঠিক সিকিউরিটি পাসওয়ার্ড প্রদান করুন (যেমন: 4012)');
+      setErrorMsg('ভুল সিকিউরিটি পাসওয়ার্ড! আপনার প্রাতিষ্ঠানিক পাসওয়ার্ড সঠিকভাবে প্রদান করুন।');
       return;
     }
 
@@ -809,14 +809,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700">
-                      অ্যাডমিন সিকিউরিটি পাসওয়ার্ড / পিন
-                    </label>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-bold">
-                      পাসওয়ার্ড: 4012
-                    </span>
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    অ্যাডমিন সিকিউরিটি পাসওয়ার্ড / পিন
+                  </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input
@@ -825,7 +820,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       required
                       value={adminPin}
                       onChange={(e) => setAdminPin(e.target.value)}
-                      placeholder="পাসওয়ার্ড লিখুন (4012)"
+                      placeholder="আপনার গোপন সিকিউরিটি পাসওয়ার্ড লিখুন"
                       className="w-full pl-9 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-900 focus:outline-none font-mono"
                     />
                     <button
