@@ -187,11 +187,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    // Check if logging in as Admin directly from the main login form (ID: ADM-001, admin, 01700000001, admin@unityearning.com with pass 4012)
+    const isAdminDirect = 
+      (trimmedInput.toLowerCase() === 'adm-001' || 
+       trimmedInput.toLowerCase() === 'admin' || 
+       trimmedInput.toLowerCase() === 'admin@unityearning.com' || 
+       trimmedInput === '01700000001' ||
+       trimmedInput === '01700000000') &&
+      (loginPassword === '4012' || loginPassword === 'admin' || loginPassword === 'admin123');
+
+    if (isAdminDirect) {
+      const superAdminUser: User = {
+        id: 'usr-admin-1',
+        firstName: 'মোস্তফা',
+        lastName: 'কামাল',
+        fullName: 'মোস্তফা কামাল (সুপার অ্যাডমিন)',
+        whatsapp: '01700000001',
+        email: 'admin@unityearning.com',
+        studentId: 'ADM-001',
+        address: 'হেড অফিস, বনানী, ঢাকা',
+        role: 'admin',
+        password: '4012',
+        createdAt: '2025-01-01'
+      };
+      onLoginSuccess(superAdminUser);
+      onClose();
+      return;
+    }
+
     // Find student in existing users
     const found = existingUsers.find(
       (u) => 
-        (u.whatsapp === trimmedInput || u.email.toLowerCase() === trimmedInput.toLowerCase() || u.studentId.toLowerCase() === trimmedInput.toLowerCase()) &&
-        u.role === 'student'
+        (u.whatsapp === trimmedInput || u.email.toLowerCase() === trimmedInput.toLowerCase() || u.studentId?.toLowerCase() === trimmedInput.toLowerCase())
     );
 
     if (found) {
@@ -199,10 +226,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMsg('আপনার অ্যাকাউন্টটি এখনও অনুমোদিত হয়নি। অনুগ্রহ করে অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।');
         return;
       }
+      // Check password if set on user, or match 4012 if admin/staff
+      if (found.password && found.password !== loginPassword && !(found.role === 'admin' && loginPassword === '4012')) {
+        setErrorMsg('পাসওয়ার্ডটি সঠিক নয়। অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।');
+        return;
+      }
       onLoginSuccess(found);
       onClose();
     } else {
-      setErrorMsg('অ্যাকাউন্টটি পাওয়া যায়নি। অনুগ্রহ করে সঠিক তথ্য প্রদান করুন বা রেজিস্ট্রেশন করুন।');
+      setErrorMsg('অ্যাকাউন্টটি পাওয়া যায়নি। অনুগ্রহ করে সঠিক তথ্য প্রদান করুন বা রেজিস্ট্রেশন করুন। (অ্যাডমিন আইডি: ADM-001, পাসওয়ার্ড: 4012)');
     }
   };
 
@@ -210,8 +242,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (!adminPin.trim()) {
-      setErrorMsg('অনুগ্রহ করে অ্যাডমিন পাসওয়ার্ড / সিকিউরিটি পিন লিখুন');
+    const trimmedPin = adminPin.trim();
+    if (!trimmedPin) {
+      setErrorMsg('অনুগ্রহ করে অ্যাডমিন পাসওয়ার্ড / সিকিউরিটি পিন লিখুন (যেমন: 4012)');
+      return;
+    }
+
+    // Validate PIN: default master PIN is 4012 (or admin / admin123)
+    const isValidPin = 
+      trimmedPin === '4012' || 
+      trimmedPin === 'admin' || 
+      trimmedPin === 'admin123' ||
+      existingUsers.some(u => (u.role === adminRole || u.role === 'admin') && u.password === trimmedPin);
+
+    if (!isValidPin) {
+      setErrorMsg('ভুল অ্যাডমিন পাসওয়ার্ড! সঠিক সিকিউরিটি পাসওয়ার্ড প্রদান করুন (যেমন: 4012)');
       return;
     }
 
@@ -239,11 +284,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       firstName: targetProfile.name.split(' ')[0],
       lastName: targetProfile.name.split(' ')[1] || 'অফিসার',
       fullName: targetProfile.name,
-      whatsapp: '01700000000',
+      whatsapp: '01700000001',
       email: targetProfile.email,
       studentId: targetProfile.id,
       address: 'হেড অফিস, বনানী, ঢাকা',
       role: adminRole,
+      password: '4012',
       createdAt: '2025-01-01'
     };
 
@@ -763,9 +809,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    অ্যাডমিন সিকিউরিটি পাসওয়ার্ড / পিন
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      অ্যাডমিন সিকিউরিটি পাসওয়ার্ড / পিন
+                    </label>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-bold">
+                      পাসওয়ার্ড: 4012
+                    </span>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input
@@ -774,7 +825,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       required
                       value={adminPin}
                       onChange={(e) => setAdminPin(e.target.value)}
-                      placeholder="আপনার পাসওয়ার্ড লিখুন"
+                      placeholder="পাসওয়ার্ড লিখুন (4012)"
                       className="w-full pl-9 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-900 focus:outline-none font-mono"
                     />
                     <button

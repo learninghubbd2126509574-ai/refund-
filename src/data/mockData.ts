@@ -11,6 +11,7 @@ export const INITIAL_USERS: User[] = [
     studentId: 'ADM-001',
     address: 'হেড অফিস, বনানী, ঢাকা',
     role: 'admin',
+    password: '4012',
     createdAt: '2025-01-01'
   }
 ];
