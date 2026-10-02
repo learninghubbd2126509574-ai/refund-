@@ -17,7 +17,8 @@ import {
   ExternalLink,
   MessageCircle,
   Maximize2,
-  Download
+  Download,
+  Receipt
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,6 +38,7 @@ export const ApplicationDetailsModal: React.FC<ApplicationDetailsModalProps> = (
   telegramUrl = 'https://t.me/unityearning12',
 }) => {
   const [imageZoomed, setImageZoomed] = useState(false);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   if (!isOpen || !request) return null;
 
@@ -269,11 +271,79 @@ export const ApplicationDetailsModal: React.FC<ApplicationDetailsModalProps> = (
             </div>
           </div>
 
-          {/* Section 4: Refund Payout Method & Amount */}
+          {/* Section 4: Admission Payment Details & Payment Screenshot */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+            <span className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-emerald-600" />
+              <span>ভর্তির পেমেন্ট ও স্ক্রিনশট তথ্য:</span>
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">পরিশোধিত ফি</span>
+                <strong className="text-sm font-black text-slate-900 font-mono block mt-0.5">
+                  ৳ {(request.paidAmount || request.amount || 0).toLocaleString('bn-BD')}
+                </strong>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">পেমেন্ট মেথড</span>
+                <strong className="text-sm font-bold text-slate-900 block mt-0.5">
+                  {methodLabels[request.paidMethod || 'bkash'] || request.paidMethod || 'বিকাশ'}
+                </strong>
+              </div>
+
+              <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                <span className="text-[10px] text-emerald-800 block uppercase font-bold">ট্রানজেকশন আইডি (TrxID)</span>
+                <strong className="text-sm font-mono font-black text-emerald-900 block mt-0.5 tracking-wider">
+                  {request.paymentTransactionId || request.transactionId || 'প্রদান করা হয়নি'}
+                </strong>
+              </div>
+            </div>
+
+            {/* Payment Screenshot Preview */}
+            {request.paymentProofUrl ? (
+              <div className="space-y-2 pt-1">
+                <span className="text-xs font-semibold text-slate-700 block">পেমেন্টের স্ক্রিনশট:</span>
+                <div className="relative rounded-xl border border-slate-200 overflow-hidden bg-slate-50 group">
+                  <img
+                    src={request.paymentProofUrl}
+                    alt="পেমেন্টের স্ক্রিনশট"
+                    className="w-full max-h-64 object-contain mx-auto cursor-pointer"
+                    onClick={() => { setZoomedImageUrl(request.paymentProofUrl || null); }}
+                  />
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
+                    <button
+                      onClick={() => { setZoomedImageUrl(request.paymentProofUrl || null); }}
+                      className="px-3 py-1.5 rounded-lg bg-white text-slate-900 font-bold text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>বড় করে দেখুন</span>
+                    </button>
+                    <a
+                      href={request.paymentProofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>নতুন ট্যাবে খুলুন</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-500 text-xs">
+                কোনো পেমেন্ট স্ক্রিনশট সংযুক্ত করা হয়নি।
+              </div>
+            )}
+          </div>
+
+          {/* Section 5: Refund Payout Method & Amount */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
             <span className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-emerald-600" />
-              <span>রিফান্ড অর্থ ও অ্যাকাউন্টের বিবরণ:</span>
+              <span>রিফান্ড পাওয়ার তথ্য (Payout Details):</span>
             </span>
 
             <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -411,22 +481,31 @@ export const ApplicationDetailsModal: React.FC<ApplicationDetailsModalProps> = (
 
       {/* Full Size Image Lightbox */}
       <AnimatePresence>
-        {imageZoomed && request.handwrittenApplicationUrl && (
+        {(imageZoomed || zoomedImageUrl) && (
           <div 
             className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs cursor-pointer"
-            onClick={() => setImageZoomed(false)}
+            onClick={() => {
+              setImageZoomed(false);
+              setZoomedImageUrl(null);
+            }}
           >
-            <div className="relative max-w-4xl max-h-[90vh] bg-white p-2 rounded-2xl shadow-2xl overflow-auto" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => setImageZoomed(false)}
-                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-slate-900/80 text-white flex items-center justify-center hover:bg-slate-900 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="relative max-w-4xl max-h-[90vh] bg-white p-3 rounded-2xl shadow-2xl overflow-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-800">পূর্ণাঙ্গ ছবি ভিউ</span>
+                <button
+                  onClick={() => {
+                    setImageZoomed(false);
+                    setZoomedImageUrl(null);
+                  }}
+                  className="p-1 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
               <img
-                src={request.handwrittenApplicationUrl}
-                alt="হাতে লেখা দরখাস্ত পূর্ণ ছবি"
-                className="max-h-[85vh] w-auto mx-auto object-contain rounded-xl"
+                src={zoomedImageUrl || request.handwrittenApplicationUrl || ''}
+                alt="পূর্ণ ছবি"
+                className="max-h-[80vh] w-auto mx-auto object-contain rounded-xl"
               />
             </div>
           </div>

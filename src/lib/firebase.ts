@@ -215,6 +215,30 @@ export async function seedInitialUsers() {
 }
 
 /**
+ * Deeply sanitizes any JavaScript object or array to ensure it is 100% compliant with Firestore:
+ * - Strips any `undefined` properties (which cause Firestore setDoc to reject documents)
+ * - Converts invalid values into null or safe primitives
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as unknown as T;
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data as Record<string, any>)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
+
+/**
  * Create or save a new Refund Request in Firestore
  */
 export async function saveRefundRequestToDb(req: RefundRequest): Promise<void> {
@@ -224,9 +248,30 @@ export async function saveRefundRequestToDb(req: RefundRequest): Promise<void> {
   saveLocalCachedRequests(updated);
 
   try {
-    await setDoc(doc(db, REQUESTS_COLLECTION, req.id), req, { merge: true });
+    const safeData = sanitizeForFirestore(req);
+    await setDoc(doc(db, REQUESTS_COLLECTION, req.id), safeData, { merge: true });
+    console.log(`✅ Refund request ${req.id} successfully written to Firestore.`);
   } catch (err) {
+    console.error(`❌ Firestore write error for request ${req.id}:`, err);
     handleFirestoreError(err, OperationType.CREATE, `${REQUESTS_COLLECTION}/${req.id}`);
+
+    // If document was rejected due to size or unparseable field, attempt with safe payload
+    try {
+      const safeReq: RefundRequest = {
+        ...req,
+        handwrittenApplicationUrl: req.handwrittenApplicationUrl && req.handwrittenApplicationUrl.length > 500000 
+          ? req.handwrittenApplicationUrl.substring(0, 400000) 
+          : req.handwrittenApplicationUrl,
+        paymentProofUrl: req.paymentProofUrl && req.paymentProofUrl.length > 500000 
+          ? req.paymentProofUrl.substring(0, 400000) 
+          : req.paymentProofUrl,
+      };
+      const cleanSafeReq = sanitizeForFirestore(safeReq);
+      await setDoc(doc(db, REQUESTS_COLLECTION, req.id), cleanSafeReq, { merge: true });
+      console.log(`✅ Refund request ${req.id} saved via secondary fallback.`);
+    } catch (retryErr) {
+      console.error(`❌ Secondary write failed:`, retryErr);
+    }
   }
 }
 
@@ -240,7 +285,8 @@ export async function updateRefundRequestInDb(req: RefundRequest): Promise<void>
   saveLocalCachedRequests(updated);
 
   try {
-    await setDoc(doc(db, REQUESTS_COLLECTION, req.id), req, { merge: true });
+    const safeData = sanitizeForFirestore(req);
+    await setDoc(doc(db, REQUESTS_COLLECTION, req.id), safeData, { merge: true });
   } catch (err) {
     handleFirestoreError(err, OperationType.UPDATE, `${REQUESTS_COLLECTION}/${req.id}`);
   }
@@ -255,7 +301,8 @@ export async function saveUserToDb(user: User): Promise<void> {
   saveLocalCachedUsers(updated);
 
   try {
-    await setDoc(doc(db, USERS_COLLECTION, user.id), user, { merge: true });
+    const safeData = sanitizeForFirestore(user);
+    await setDoc(doc(db, USERS_COLLECTION, user.id), safeData, { merge: true });
   } catch (err) {
     handleFirestoreError(err, OperationType.CREATE, `${USERS_COLLECTION}/${user.id}`);
   }
@@ -364,7 +411,8 @@ export async function saveAppSettingsToDb(settings: AppSettings): Promise<void> 
   saveLocalCachedSettings(settings);
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID);
-    await setDoc(settingsDocRef, settings, { merge: true });
+    const safeData = sanitizeForFirestore(settings);
+    await setDoc(settingsDocRef, safeData, { merge: true });
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `${SETTINGS_COLLECTION}/${SETTINGS_DOC_ID}`);
   }

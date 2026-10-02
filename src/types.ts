@@ -144,6 +144,8 @@ export interface RefundRequest {
   amount: number;
   paymentMethod?: RefundMethod;
   paymentAccount?: string;
+  paymentTransactionId?: string; // ভর্তি বা পেমেন্টের TrxID
+  paymentProofUrl?: string; // পেমেন্ট স্ক্রিনশটের ইমেজ
   payoutMethod: RefundMethod;
   payoutAccount: string;
   transactionId?: string; // initial payment or payout txn

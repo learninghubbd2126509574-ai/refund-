@@ -79,7 +79,7 @@ export const RefundTimeline: React.FC<RefundTimelineProps> = ({
   const studentDisplayName = request.fullName || request.studentName || (isBn ? 'শিক্ষার্থী' : 'Student');
 
   return (
-    <div className="max-w-md sm:max-w-xl mx-auto px-3.5 sm:px-5 py-3 sm:py-5 text-left space-y-3 sm:space-y-4 font-sans text-slate-800">
+    <div className="max-w-2xl mx-auto px-3.5 sm:px-6 py-4 sm:py-7 text-left space-y-3.5 sm:space-y-4 font-sans text-slate-800">
       
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-2 pb-1">

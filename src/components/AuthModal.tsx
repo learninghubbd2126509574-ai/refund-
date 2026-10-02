@@ -149,7 +149,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       role: 'student',
       teamLeaderName: teamLeaderName.trim() || 'নির্ধারিত হয়নি',
       teamTrainerName: teamTrainerName.trim() || 'নির্ধারিত হয়নি',
-      status: 'pending',
+      status: 'approved', // Active so student can immediately log in and submit refund request
       createdAt: new Date().toISOString().split('T')[0],
       registeredAt: new Date().toLocaleString('bn-BD', {
         year: 'numeric',
@@ -222,7 +222,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     );
 
     if (found) {
-      if (found.status === 'pending') {
+      // If user is staff/admin and still pending, wait for super admin
+      if (found.status === 'pending' && found.role !== 'student') {
         setErrorMsg('আপনার অ্যাকাউন্টটি এখনও অনুমোদিত হয়নি। অনুগ্রহ করে অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।');
         return;
       }
@@ -395,15 +396,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
 
                   <div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold mb-2">
-                      <Clock className="w-3.5 h-3.5 text-amber-600" />
-                      স্ট্যাটাস: পেন্ডিং (অ্যাডমিন অনুমোদনের অপেক্ষায়)
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold mb-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      স্ট্যাটাস: সক্রিয় (অ্যাকাউন্ট তৈরি সম্পন্ন)
                     </span>
                     <h3 className="text-xl font-bold text-slate-900">
                       রেজিস্ট্রেশন সফলভাবে সম্পন্ন হয়েছে!
                     </h3>
                     <p className="text-xs text-slate-600 mt-1 max-w-sm mx-auto leading-relaxed">
-                      আপনার নিবন্ধনের যাবতীয় তথ্য অ্যাডমিন প্যানেলের <strong>"পেন্ডিং রেজিস্ট্রেশন"</strong> তালিকায় পাঠানো হয়েছে। অ্যাডমিন এটি অনুমোদন (Approve) করার পর আপনি লগইন করতে পারবেন।
+                      আপনার শিক্ষার্থী অ্যাকাউন্ট তৈরি হয়েছে। এখন সরাসরি ড্যাশবোর্ডে প্রবেশ করে রিফান্ড রিকোয়েস্ট পাঠাতে পারবেন।
                     </p>
                   </div>
 
@@ -443,6 +444,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   <div className="space-y-2 pt-2">
                     <button
+                      id="reg-direct-login-btn"
+                      type="button"
+                      onClick={() => {
+                        onLoginSuccess(registeredSuccessUser);
+                        onClose();
+                      }}
+                      className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>সরাসরি ড্যাশবোর্ডে প্রবেশ করুন ও রিফান্ড আবেদন পাঠান</span>
+                    </button>
+
+                    <button
                       id="reg-goto-login-btn"
                       type="button"
                       onClick={() => {
@@ -451,10 +465,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         setActiveTab('login');
                         setRegisteredSuccessUser(null);
                       }}
-                      className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <LogIn className="w-4 h-4" />
-                      <span>লগইন স্ক্রিনে যান</span>
+                      <span>লগইন স্ক্রিন দেখুন</span>
                     </button>
 
                     <div className="flex items-center gap-2">

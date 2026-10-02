@@ -43,7 +43,10 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Sparkles
+  Sparkles,
+  X,
+  Receipt,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ApplicationDetailsModal } from './ApplicationDetailsModal';
@@ -71,7 +74,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateAppSettings,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('pending_requests');
+  const [activeTab, setActiveTab] = useState<string>('pending');
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [methodFilter, setMethodFilter] = useState('all');
@@ -523,16 +527,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const navItems = [
+    { id: 'pending', label: 'পেন্ডিং রিফান্ড', icon: Clock, count: pendingCount, isAlert: pendingCount > 0 },
+    { id: 'all', label: 'সকল রিফান্ড রিকোয়েস্ট', icon: FileText, count: totalCount },
+    { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: LayoutDashboard, count: totalCount },
     { id: 'pending_requests', label: 'পেন্ডিং রেজিস্ট্রেশন', icon: UserPlus, count: pendingUsersCount },
     { id: 'approved_students', label: 'অ্যাপ্রুভ স্টুডেন্ট', icon: UserCheck, count: approvedStudentsCount },
-    { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: LayoutDashboard, count: totalCount },
-    { id: 'support_video', label: 'সাপোর্ট ভিডিও লিংক', icon: Youtube },
-    { id: 'pending', label: 'পেন্ডিং রিফান্ড', icon: Clock, count: pendingCount },
     { id: 'in_review', label: 'রিভিউ চলছে', icon: Clock, count: inReviewCount },
     { id: 'approved', label: 'অনুমোদিত রিফান্ড', icon: CheckCircle2, count: approvedCount },
     { id: 'rejected', label: 'প্রত্যাখ্যাত রিফান্ড', icon: XCircle, count: rejectedCount },
     { id: 'completed', label: 'সম্পন্ন রিফান্ড', icon: Check, count: completedCount },
-    { id: 'all', label: 'সকল রিকোয়েস্ট', icon: FileText, count: totalCount },
+    { id: 'support_video', label: 'সাপোর্ট ভিডিও লিংক', icon: Youtube },
     { id: 'users', label: 'সকল ইউজার ও স্টাফ', icon: Users, count: users.length },
     { id: 'settings', label: 'সেটিংস', icon: Settings },
   ];
@@ -658,6 +662,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </select>
           </div>
         </div>
+
+        {/* ================= PROMINENT NEW PENDING REFUND ALERT BANNER ================= */}
+        {pendingCount > 0 && activeTab !== 'pending' && (
+          <div className="mb-6 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-white animate-pulse" />
+              </div>
+              <div>
+                <div className="font-bold text-sm sm:text-base flex items-center gap-2">
+                  <span>নতুন রিফান্ড আবেদন জমা পড়েছে!</span>
+                  <span className="bg-white text-orange-950 px-2.5 py-0.5 rounded-full text-xs font-mono font-black shadow-xs">
+                    {pendingCount}টি আবেদন পেন্ডিং
+                  </span>
+                </div>
+                <p className="text-xs text-orange-100 mt-0.5">
+                  শিক্ষার্থীদের প্রেরিত পেমেন্ট স্ক্রিনশট, TrxID ও আবেদনপত্র যাচাই করে অনুমোদন বা প্রসেস করুন।
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setActiveTab('pending'); setSelectedRequest(null); }}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-orange-50 text-orange-900 font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>পেন্ডিং রিফান্ড তালিকায় যান ({pendingCount})</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Overview KPIs (Shown in dashboard tab) */}
         {activeTab === 'dashboard' && (
@@ -1535,8 +1568,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 text-[11px] uppercase">
                   <tr>
-                    <th className="py-3 px-3.5 whitespace-nowrap">আইডি</th>
+                    <th className="py-3 px-3.5 whitespace-nowrap">আইডি ও তারিখ</th>
                     <th className="py-3 px-3.5 whitespace-nowrap">শিক্ষার্থীর তথ্য</th>
+                    <th className="py-3 px-3.5 whitespace-nowrap">পেমেন্ট স্ক্রিনশট ও TrxID</th>
                     <th className="py-3 px-3.5 whitespace-nowrap">হাতে লেখা দরখাস্ত</th>
                     <th className="py-3 px-3.5 whitespace-nowrap">রিফান্ডের কারণ</th>
                     <th className="py-3 px-3.5 whitespace-nowrap">পরিমাণ ও মাধ্যম</th>
@@ -1548,7 +1582,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <tbody className="divide-y divide-slate-100">
                   {filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-400">
+                      <td colSpan={9} className="p-8 text-center text-slate-400">
                         কোনো রিফান্ড আবেদন পাওয়া যায়নি।
                       </td>
                     </tr>
@@ -1604,6 +1638,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="text-[10px] text-teal-800 font-medium mt-0.5">
                               TL: <strong className="text-slate-900">{req.teamLeaderName || '—'}</strong>
                               {req.teamTrainerName && <span> • Tr: {req.teamTrainerName}</span>}
+                            </div>
+                          </td>
+
+                          {/* Payment Proof Screenshot & TrxID */}
+                          <td className="py-2.5 px-3.5 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                  {req.paidMethod || 'পেমেন্ট'}
+                                </span>
+                                <span className="font-mono font-bold text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                  {req.paymentTransactionId || req.transactionId || 'TrxID নেই'}
+                                </span>
+                              </div>
+                              {req.paymentProofUrl ? (
+                                <div className="flex items-center gap-1.5">
+                                  <img
+                                    src={req.paymentProofUrl}
+                                    alt="Payment Screenshot"
+                                    className="w-8 h-8 rounded-lg object-cover border border-slate-200 cursor-pointer hover:ring-2 hover:ring-emerald-500 shadow-2xs"
+                                    onClick={() => setZoomedImageUrl(req.paymentProofUrl || null)}
+                                    title="ক্লিক করে বড় করে দেখুন"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setZoomedImageUrl(req.paymentProofUrl || null)}
+                                    className="text-[10px] text-emerald-700 hover:text-emerald-900 font-bold hover:underline cursor-pointer"
+                                  >
+                                    স্ক্রিনশট ভিউ
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 block">স্ক্রিনশট নেই</span>
+                              )}
                             </div>
                           </td>
 
@@ -2718,6 +2786,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         supportEmail={appSettings?.supportEmail}
         telegramUrl={appSettings?.telegramUrl}
       />
+
+      {/* Zoomed Image Lightbox Modal */}
+      {zoomedImageUrl && (
+        <div 
+          className="fixed inset-0 z-70 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setZoomedImageUrl(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-3 sm:p-4 max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-800">সংযুক্ত প্রুফ / নথিপত্র প্রিভিউ</span>
+              <button
+                onClick={() => setZoomedImageUrl(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-auto flex-1 flex items-center justify-center bg-slate-900 rounded-2xl p-2">
+              <img
+                src={zoomedImageUrl}
+                alt="Zoomed document"
+                className="max-h-[75vh] w-auto object-contain rounded-lg"
+              />
+            </div>
+            <div className="pt-3 flex items-center justify-end gap-2">
+              <a
+                href={zoomedImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>নতুন ট্যাবে আসল সাইজে দেখুন</span>
+              </a>
+              <button
+                onClick={() => setZoomedImageUrl(null)}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
